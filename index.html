@@ -8,45 +8,250 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3498db"/>
     <link rel="apple-touch-icon" href="images/icons/icon-192x192.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+    <div class="theme-toggle">
+        <button id="theme-toggle-btn"><i class="fas fa-moon"></i></button>
+    </div>
+    
     <div class="container">
-        <h1>جعبه لایتنر 504</h1>
-        <div class="stats">
-            <p>درس: <span id="lesson-number">1</span></p>
-            <p>جعبه ۱: <span id="box1-count">0</span></p>
-            <p>جعبه ۲: <span id="box2-count">0</span></p>
-            <p>جعبه ۳: <span id="box3-count">0</span></p>
-            <p>جعبه ۴: <span id="box4-count">0</span></p>
-            <p>جعبه ۵: <span id="box5-count">0</span></p>
-            <p>یادگرفته شده: <span id="learned-count">0</span></p>
+        <div class="app-header">
+            <h1>جعبه لایتنر 504</h1>
+            <div class="menu-toggle">
+                <button id="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+            </div>
         </div>
-        <div id="card-container" class="card-container">
-            <div class="card">
-                <div class="card-front">
-                    <p id="word"></p>
+        
+        <div class="main-menu" id="main-menu">
+            <ul>
+                <li data-view="study" class="active">مطالعه</li>
+                <li data-view="search">جستجو</li>
+                <li data-view="stats">آمار و پیشرفت</li>
+                <li data-view="custom-words">کلمات شخصی</li>
+                <li data-view="settings">تنظیمات</li>
+            </ul>
+        </div>
+        
+        <div class="view" id="study-view">
+            <div class="stats">
+                <p>درس: <span id="lesson-number">1</span></p>
+                <p>جعبه ۱: <span id="box1-count">0</span></p>
+                <p>جعبه ۲: <span id="box2-count">0</span></p>
+                <p>جعبه ۳: <span id="box3-count">0</span></p>
+                <p>جعبه ۴: <span id="box4-count">0</span></p>
+                <p>جعبه ۵: <span id="box5-count">0</span></p>
+                <p>یادگرفته شده: <span id="learned-count">0</span></p>
+            </div>
+            <div id="card-container" class="card-container">
+                <div class="card">
+                    <div class="card-front">
+                        <p id="word"></p>
+                        <button id="pronunciation-btn" class="pronunciation-btn"><i class="fas fa-volume-up"></i></button>
+                    </div>
+                    <div class="card-back">
+                        <p id="meaning"></p>
+                        <p id="pronunciation"></p>
+                        <p id="example"></p>
+                        <button id="add-note-btn" class="note-btn"><i class="fas fa-sticky-note"></i> افزودن یادداشت</button>
+                    </div>
                 </div>
-                <div class="card-back">
-                    <p id="meaning"></p>
-                    <p id="pronunciation"></p>
-                    <p id="example"></p>
+            </div>
+            <div class="controls">
+                <button id="reveal-btn">نمایش معنی</button>
+                <div id="answer-buttons" style="display: none;">
+                    <button id="correct-btn">درست</button>
+                    <button id="incorrect-btn">غلط</button>
+                </div>
+            </div>
+            <div class="navigation">
+                <button id="prev-lesson-btn" disabled>درس قبل</button>
+                <button id="next-lesson-btn">درس بعد</button>
+            </div>
+        </div>
+        
+        <div class="view" id="search-view" style="display: none;">
+            <h2>جستجوی کلمات</h2>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="جستجوی کلمه...">
+                <div class="filter-options">
+                    <select id="lesson-filter">
+                        <option value="all">همه درس‌ها</option>
+                        <!-- Options will be added dynamically -->
+                    </select>
+                    <select id="box-filter">
+                        <option value="all">همه جعبه‌ها</option>
+                        <option value="1">جعبه ۱</option>
+                        <option value="2">جعبه ۲</option>
+                        <option value="3">جعبه ۳</option>
+                        <option value="4">جعبه ۴</option>
+                        <option value="5">جعبه ۵</option>
+                        <option value="learned">یادگرفته شده</option>
+                    </select>
+                </div>
+                <button id="search-btn"><i class="fas fa-search"></i> جستجو</button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </div>
+        
+        <div class="view" id="stats-view" style="display: none;">
+            <h2>آمار و پیشرفت</h2>
+            <div class="stats-container">
+                <div class="progress-summary">
+                    <div class="progress-item">
+                        <h3>پیشرفت کلی</h3>
+                        <div class="progress-bar-container">
+                            <div id="total-progress-bar" class="progress-bar"></div>
+                            <span id="total-progress-text">0%</span>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <h3>کلمات یادگرفته شده</h3>
+                        <div id="learned-words-count" class="stat-number">0/504</div>
+                    </div>
+                    <div class="progress-item">
+                        <h3>درس‌های تکمیل شده</h3>
+                        <div id="completed-lessons-count" class="stat-number">0/10</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+                <div class="study-streak">
+                    <h3>زنجیره مطالعه</h3>
+                    <div class="streak-days">
+                        <div class="streak-day" data-day="شنبه"></div>
+                        <div class="streak-day" data-day="یکشنبه"></div>
+                        <div class="streak-day" data-day="دوشنبه"></div>
+                        <div class="streak-day" data-day="سه‌شنبه"></div>
+                        <div class="streak-day" data-day="چهارشنبه"></div>
+                        <div class="streak-day" data-day="پنجشنبه"></div>
+                        <div class="streak-day" data-day="جمعه"></div>
+                    </div>
+                    <p>زنجیره فعلی: <span id="current-streak">0</span> روز</p>
+                    <p>بیشترین زنجیره: <span id="max-streak">0</span> روز</p>
                 </div>
             </div>
         </div>
-        <div class="controls">
-            <button id="reveal-btn">نمایش معنی</button>
-            <div id="answer-buttons" style="display: none;">
-                <button id="correct-btn">درست</button>
-                <button id="incorrect-btn">غلط</button>
+        
+        <div class="view" id="custom-words-view" style="display: none;">
+            <h2>کلمات شخصی</h2>
+            <div class="custom-words-container">
+                <div class="add-word-form">
+                    <h3>افزودن کلمه جدید</h3>
+                    <div class="form-group">
+                        <label for="new-word">کلمه:</label>
+                        <input type="text" id="new-word" placeholder="کلمه انگلیسی">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-meaning">معنی:</label>
+                        <input type="text" id="new-meaning" placeholder="معنی فارسی">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-pronunciation">تلفظ:</label>
+                        <input type="text" id="new-pronunciation" placeholder="تلفظ (اختیاری)">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-example">مثال:</label>
+                        <textarea id="new-example" placeholder="یک جمله مثال (اختیاری)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-lesson">درس:</label>
+                        <select id="custom-lesson">
+                            <option value="custom">درس شخصی</option>
+                            <!-- Options will be added dynamically -->
+                        </select>
+                    </div>
+                    <button id="add-word-btn">افزودن کلمه</button>
+                </div>
+                <div class="custom-words-list">
+                    <h3>کلمات شخصی شما</h3>
+                    <div id="custom-words-container"></div>
+                </div>
             </div>
         </div>
-         <div class="navigation">
-             <button id="prev-lesson-btn" disabled>درس قبل</button>
-             <button id="next-lesson-btn">درس بعد</button>
-         </div>
+        
+        <div class="view" id="settings-view" style="display: none;">
+            <h2>تنظیمات</h2>
+            <div class="settings-container">
+                <div class="setting-group">
+                    <h3>تنظیمات ظاهری</h3>
+                    <div class="setting-item">
+                        <label for="font-size">اندازه متن:</label>
+                        <select id="font-size">
+                            <option value="small">کوچک</option>
+                            <option value="medium" selected>متوسط</option>
+                            <option value="large">بزرگ</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="card-animation">انیمیشن کارت:</label>
+                        <select id="card-animation">
+                            <option value="flip" selected>چرخش</option>
+                            <option value="fade">محو شدن</option>
+                            <option value="slide">کشویی</option>
+                            <option value="none">بدون انیمیشن</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>تنظیمات مطالعه</h3>
+                    <div class="setting-item">
+                        <label for="daily-goal">هدف روزانه:</label>
+                        <select id="daily-goal">
+                            <option value="10">10 کلمه</option>
+                            <option value="20" selected>20 کلمه</option>
+                            <option value="30">30 کلمه</option>
+                            <option value="50">50 کلمه</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="reminder-time">زمان یادآوری:</label>
+                        <input type="time" id="reminder-time" value="20:00">
+                    </div>
+                    <div class="setting-item checkbox">
+                        <input type="checkbox" id="enable-notifications" checked>
+                        <label for="enable-notifications">فعال‌سازی اعلان‌ها</label>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>پشتیبان‌گیری و بازیابی</h3>
+                    <div class="setting-buttons">
+                        <button id="export-data-btn">صادر کردن داده‌ها</button>
+                        <button id="import-data-btn">وارد کردن داده‌ها</button>
+                        <input type="file" id="import-file" style="display: none;">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>تنظیمات پیشرفته</h3>
+                    <div class="setting-item checkbox">
+                        <input type="checkbox" id="reset-on-error">
+                        <label for="reset-on-error">بازگشت به جعبه ۱ در صورت اشتباه</label>
+                    </div>
+                    <div class="setting-buttons danger-zone">
+                        <button id="reset-progress-btn" class="danger">بازنشانی پیشرفت</button>
+                        <button id="reset-all-btn" class="danger">بازنشانی کامل برنامه</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for notes -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>یادداشت شخصی</h3>
+            <textarea id="note-text" placeholder="یادداشت خود را اینجا بنویسید..."></textarea>
+            <button id="save-note-btn">ذخیره</button>
+        </div>
     </div>
 
     <script src="words.js"></script>
     <script src="script.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

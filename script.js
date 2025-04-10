@@ -256,7 +256,7 @@ initializeState();
 // --- Service Worker Registration (for PWA) ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js') // Adjusted path
+    navigator.serviceWorker.register('./sw.js') // Fixed path to be relative
       .then(registration => {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })

@@ -2,7 +2,7 @@
   "name": "Leitner 504",
   "short_name": "Leitner504",
   "description": "Learn 504 Essential Words using the Leitner system.",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3498db",

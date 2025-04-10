@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitner 504</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db"/>
+    <link rel="apple-touch-icon" href="images/icons/icon-192x192.png">
+</head>
+<body>
+    <div class="container">
+        <h1>جعبه لایتنر 504</h1>
+        <div class="stats">
+            <p>درس: <span id="lesson-number">1</span></p>
+            <p>جعبه ۱: <span id="box1-count">0</span></p>
+            <p>جعبه ۲: <span id="box2-count">0</span></p>
+            <p>جعبه ۳: <span id="box3-count">0</span></p>
+            <p>جعبه ۴: <span id="box4-count">0</span></p>
+            <p>جعبه ۵: <span id="box5-count">0</span></p>
+            <p>یادگرفته شده: <span id="learned-count">0</span></p>
+        </div>
+        <div id="card-container" class="card-container">
+            <div class="card">
+                <div class="card-front">
+                    <p id="word"></p>
+                </div>
+                <div class="card-back">
+                    <p id="meaning"></p>
+                    <p id="pronunciation"></p>
+                    <p id="example"></p>
+                </div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="reveal-btn">نمایش معنی</button>
+            <div id="answer-buttons" style="display: none;">
+                <button id="correct-btn">درست</button>
+                <button id="incorrect-btn">غلط</button>
+            </div>
+        </div>
+         <div class="navigation">
+             <button id="prev-lesson-btn" disabled>درس قبل</button>
+             <button id="next-lesson-btn">درس بعد</button>
+         </div>
+    </div>
+
+    <script src="words.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

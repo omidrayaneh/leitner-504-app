@@ -49,6 +49,7 @@ function initializeState() {
     }
     // Ensure wordState contains all words from loaded lessons
     syncWordState();
+    updateStats(); // Add this to update stats after initialization
     loadLesson(currentLessonIndex);
 }
 
@@ -69,10 +70,26 @@ function syncWordState() {
             }
         });
     });
-    // Remove words from state if they are no longer in the lessons data (optional)
-    // ... (implementation depends on whether words might be removed from words.js)
-}
 
+    // Ensure leitnerBoxes and learnedWords are in sync with wordState
+    // Clear existing leitnerBoxes and learnedWords
+    leitnerBoxes = Array.from({ length: BOX_COUNT }, () => new Set());
+    learnedWords = new Set();
+
+    // Repopulate based on wordState
+    for (const word in wordState) {
+        const state = wordState[word];
+        if (state.box === 'learned') {
+            learnedWords.add(word);
+        } else if (state.box >= 1 && state.box <= BOX_COUNT) {
+            leitnerBoxes[state.box - 1].add(word);
+        } else {
+            // Fix invalid box values
+            wordState[word].box = 1;
+            leitnerBoxes[0].add(word);
+        }
+    }
+}
 
 function saveState() {
     const stateToSave = {
@@ -90,14 +107,29 @@ function saveState() {
 function getNextWord() {
     // Prioritize words in lower boxes for the current lesson
     for (let i = 0; i < BOX_COUNT; i++) {
-        for (const word of leitnerBoxes[i]) {
-            if (wordState[word] && wordState[word].lesson === currentLessonIndex) {
-                 // Simple selection: just the first one found. Could be randomized.
-                return findWordData(word, currentLessonIndex);
-            }
+        // Get all words from the current box that belong to the current lesson
+        const wordsInBox = Array.from(leitnerBoxes[i])
+            .filter(word => wordState[word] && wordState[word].lesson === currentLessonIndex);
+        
+        if (wordsInBox.length > 0) {
+            // Randomize selection within the box for better learning
+            const randomIndex = Math.floor(Math.random() * wordsInBox.length);
+            const selectedWord = wordsInBox[randomIndex];
+            return findWordData(selectedWord, currentLessonIndex);
         }
     }
-    // If no words for the current lesson need review, return null or handle differently
+    
+    // If no words in boxes 1-5 need review, check if there are any unlearned words in this lesson
+    const lessonWords = lessons[currentLessonIndex] || [];
+    for (const wordData of lessonWords) {
+        if (!wordState[wordData.word] || 
+            (wordState[wordData.word].box !== 'learned' && 
+             wordState[wordData.word].lesson === currentLessonIndex)) {
+            return wordData;
+        }
+    }
+    
+    // If all words are learned or no words in this lesson, return null
     return null;
 }
 
@@ -137,15 +169,16 @@ function displayWord(wordData) {
 function moveWord(wordText, correct) {
     if (!wordText || !wordState[wordText]) return;
 
-    const currentBoxIndex = wordState[wordText].box - 1; // 0-based index
+    const currentBoxIndex = wordState[wordText].box === 'learned' ? 
+        BOX_COUNT : // If already learned, use a high value
+        wordState[wordText].box - 1; // 0-based index for boxes
 
     // Remove from current box
     if (currentBoxIndex >= 0 && currentBoxIndex < BOX_COUNT) {
         leitnerBoxes[currentBoxIndex].delete(wordText);
     } else if (learnedWords.has(wordText)) {
-         learnedWords.delete(wordText); // If bringing back from learned
+        learnedWords.delete(wordText); // If bringing back from learned
     }
-
 
     if (correct) {
         if (currentBoxIndex === BOX_COUNT - 1) {
@@ -165,6 +198,7 @@ function moveWord(wordText, correct) {
     }
 
     saveState();
+    updateStats(); // Update stats immediately after moving
     displayWord(getNextWord()); // Display the next word for the current lesson
 }
 
@@ -172,28 +206,30 @@ function moveWord(wordText, correct) {
 
 function updateStats() {
     lessonNumberEl.textContent = currentLessonIndex + 1;
-    let totalLearned = 0;
 
-    // Update box counts based on wordState for the current lesson
+    // Reset all counts first
+    for (let i = 1; i <= BOX_COUNT; i++) {
+        boxCountEls[i].textContent = '0';
+    }
+    learnedCountEl.textContent = '0';
+
+    let boxCounts = Array(BOX_COUNT).fill(0);
+    let totalLearnedCount = 0;
+
+    // Count words in each box
+    for (const word in wordState) {
+        if (wordState[word].box === 'learned') {
+            totalLearnedCount++;
+        } else if (wordState[word].box >= 1 && wordState[word].box <= BOX_COUNT) {
+            boxCounts[wordState[word].box - 1]++;
+        }
+    }
+
+    // Update UI elements
     for (let i = 0; i < BOX_COUNT; i++) {
-        let count = 0;
-        for (const word of leitnerBoxes[i]) {
-            if (wordState[word] && wordState[word].lesson === currentLessonIndex) {
-                count++;
-            }
-        }
-        boxCountEls[i + 1].textContent = count;
+        boxCountEls[i + 1].textContent = boxCounts[i];
     }
-
-     // Update learned count based on wordState for the current lesson
-    let lessonLearnedCount = 0;
-    for (const word of learnedWords) {
-         if (wordState[word] && wordState[word].lesson === currentLessonIndex) {
-            lessonLearnedCount++;
-        }
-    }
-     learnedCountEl.textContent = lessonLearnedCount;
-
+    learnedCountEl.textContent = totalLearnedCount;
 
     // Update navigation buttons
     prevLessonBtn.disabled = currentLessonIndex === 0;
@@ -201,11 +237,24 @@ function updateStats() {
 }
 
 function loadLesson(lessonIndex) {
+    if (lessonIndex < 0 || lessonIndex >= MAX_LESSON) {
+        console.error("Invalid lesson index:", lessonIndex);
+        return;
+    }
+    
     currentLessonIndex = lessonIndex;
-    // No need to explicitly load words here as getNextWord handles it
-    displayWord(getNextWord()); // Display the first word of the new lesson
+    
+    // Save current state before loading new lesson
+    saveState();
+    
+    // Update stats for the new lesson
     updateStats();
-    saveState(); // Save the new lesson index
+    
+    // Get the first word for the new lesson
+    const nextWord = getNextWord();
+    
+    // Display the word or "end of lesson" message
+    displayWord(nextWord);
 }
 
 // --- Event Listeners ---
